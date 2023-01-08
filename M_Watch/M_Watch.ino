@@ -34,7 +34,7 @@ font:
 //屏幕类型--------
 U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE);
 
-#define init_draw 10	//主界面刷新时间
+#define init_draw 10  //主界面刷新时间
 
 unsigned long timer_draw,timer;
 int pkj=0;
@@ -45,8 +45,8 @@ void setup() {
   Serial.begin(115200);
   setTemp();
   setmpu6050();
-
-  setRtcTime(15, 5, 18, 1, 00, 00, 00);
+  rtc.initClock();
+//  setRtcTime(15, 5, 18, 1, 00, 00, 00);
   timer=millis();
 }
 
@@ -68,16 +68,22 @@ void loop() {
     }
     while ( u8g.nextPage() );
     timer_draw = millis();
+//    Serial.print(ret);
   }
 }
-
+DateTime mydate;
+char str[16];  
 //主界面，可自由定义
 void draw()
 {
   setFont_L;
-  u8g.setPrintPos(4, 16);
-  u8g.print(rtc.formatDate());
-  u8g.print("    ");
+  u8g.setPrintPos(0, 16);
+//  u8g.print(rtc.formatDate());
+//  u8g.print(rtc.formatDate(PCF_TIMEFORMAT_YYYY_MM_DD_H_M_S));
+  mydate = rtc.getDateTime();
+  sprintf(str,"%04u/%02u/%02u", mydate.year,mydate.month,mydate.day);  
+  u8g.print(str);
+  u8g.print(" ");
   switch (rtc.getWeekday()) {
     case 1:
       u8g.print("Mon");
@@ -101,39 +107,29 @@ void draw()
       u8g.print("Sun");
       break;
   }
-  u8g.setPrintPos(pkj, 64);
+  u8g.setPrintPos(0, 64);
   u8g.print("T:");
   u8g.print(temperature,1);
   u8g.print("`c ");
-
   u8g.print(mputemp,1);
   u8g.print("`c ");
-  
-  u8g.print("A: ");
-  
-////  u8g.print(" Xraw = ");  
-//  u8g.print((float)rawGyro.XAxis/mpuscale,1);u8g.print(" ");
-////  u8g.print(" Yraw = ");
-//  u8g.print((float)rawGyro.YAxis/mpuscale,1);u8g.print(" ");
-////  u8g.print(" Zraw = ");
-//  u8g.print((float)rawGyro.ZAxis/mpuscale,1);u8g.print(" ");
-//  u8g.print(" Xraw = ");  
-  u8g.print((float)normGyro.XAxis/mpuscale,1);u8g.print(" ");
-//  u8g.print(" Yraw = ");
-  u8g.print((float)normGyro.YAxis/mpuscale,1);u8g.print(" ");
-//  u8g.print(" Zraw = ");
-  u8g.print((float)normGyro.ZAxis/mpuscale,1);u8g.print(" ");
-//  u8g.print(" Xnorm = ");
-//  u8g.print(normGyro.XAxis);
-//  u8g.print(" Ynorm = ");
-//  u8g.print(normGyro.YAxis);
-//  u8g.print(" Znorm = ");
-//  u8g.print(normGyro.ZAxis);
+
+u8g.setPrintPos(100, 49);
+//sprintf(str,"%f", (float)normGyro.XAxis/mpuscale);  
+dtostrf((float)normGyro.XAxis/mpuscale,4, 1, str);
+u8g.print(str);
+u8g.setPrintPos(100, 49-15);
+dtostrf((float)normGyro.YAxis/mpuscale,4, 1, str);
+u8g.print(str);
+u8g.setPrintPos(100, 49-30);
+dtostrf((float)normGyro.ZAxis/mpuscale,4, 1, str);
+u8g.print(str);
+
   
 //  u8g.setPrintPos(pkj, 64); 
 //  u8g.print("Welcome! www.microduino.ccC:UserscaojiDocumentsArdu");
   setFont_SS;
-  u8g.setPrintPos(18, 49);
+  u8g.setPrintPos(18-10, 49);
   if (rtc.getHour() < 10)
   {
     u8g.print("0");
@@ -141,12 +137,12 @@ void draw()
   }
   else
     u8g.print(rtc.getHour());
-  u8g.setPrintPos(55, 46);
+  u8g.setPrintPos(55-10, 46);
   if (rtc.getSecond() % 2 == 0)
     u8g.print(":");
   else
     u8g.print(" ");
-  u8g.setPrintPos(68, 48);
+  u8g.setPrintPos(68-10, 48);
   if (rtc.getMinute() < 10)
   {
     u8g.print("0");
@@ -159,7 +155,7 @@ void draw()
 void setRtcTime (byte _year, byte _month, byte _day, byte _week, byte _hour, byte _minute, byte _sec)
 {
   //clear out all the registers
-  rtc.initClock();
+  
   rtc.setDate(_day, _week, _month, 0, _year);
   rtc.setTime(_hour, _minute, _sec);
 }
@@ -172,10 +168,11 @@ String getRtcTimeString() {
   return dateStr;
 }
 void setTemp()
-{termo.setResolution(TempI2C_LM75::ten_bits);
-termo.setResolution(TempI2C_LM75::eleven_bits);
+{
+  //termo.setResolution(TempI2C_LM75::ten_bits);
+//termo.setResolution(TempI2C_LM75::eleven_bits);
 termo.setResolution(TempI2C_LM75::twelve_bits);
-termo.setResolution(TempI2C_LM75::nine_bits);
+//termo.setResolution(TempI2C_LM75::nine_bits);
 termo.setTHyst(25);
 termo.setTOS(120);
 termo.setTermostatMode(TempI2C_LM75::interrupt_mode);
